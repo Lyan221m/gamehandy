@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Empire</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .bitcoin-count {
+            font-size: clamp(1.5em, 6vw, 3em);
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        .bps {
+            font-size: clamp(0.9em, 3vw, 1.2em);
+            opacity: 0.8;
+        }
+
+        .bitcoin {
+            width: clamp(120px, 30vw, 200px);
+            height: clamp(120px, 30vw, 200px);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f7931a 0%, #ffb347 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2em, 8vw, 4em);
+            border: 8px solid #ff8c00;
+            user-select: none;
+        }
+
+        .bitcoin:hover, .bitcoin:active {
+            transform: scale(0.95);
+        }
+
+        .bitcoin-symbol {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-weight: bold;
+        }
+
+        .bitcoin-image {
+            width: clamp(120px, 30vw, 200px);
+            height: clamp(120px, 30vw, 200px);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            user-select: none;
+        }
+
+        .bitcoin-image:hover, .bitcoin-image:active {
+            transform: scale(0.95);
+        }
+
+        .upgrades {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .upgrades h2 {
+            margin-top: 0;
+            text-align: center;
+            font-size: clamp(1.2em, 4vw, 1.5em);
+            margin-bottom: 15px;
+        }
+
+        .upgrade {
+            background: rgba(255,255,255,0.1);
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .upgrade:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upgrade.disabled:hover {
+            border-color: transparent;
+        }
+
+        .upgrade-name {
+            font-weight: bold;
+            font-size: clamp(0.9em, 3vw, 1.1em);
+            margin-bottom: 5px;
+        }
+
+        .upgrade-description {
+            font-size: clamp(0.8em, 2.5vw, 0.9em);
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        .upgrade-cost {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: clamp(0.8em, 2.5vw, 1em);
+        }
+
+        .upgrade-owned {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: clamp(0.7em, 2vw, 0.9em);
+        }
+
+        .click-effect {
+            position: absolute;
+            pointer-events: none;
+            font-size: clamp(1.2em, 4vw, 2em);
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: float-up 1s ease-out forwards;
+            z-index: 10;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        .cheat-console {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            display: none;
+            z-index: 1000;
+            border: 2px solid #00ff00;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .cheat-console h3 {
+            margin-top: 0;
+            color: #00ff00;
+            text-align: center;
+            font-size: clamp(1em, 4vw, 1.2em);
+        }
+
+        .cheat-input {
+            width: 100%;
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            font-size: clamp(0.8em, 3vw, 1em);
+            box-sizing: border-box;
+        }
+
+        .cheat-commands {
+            font-size: clamp(0.7em, 2.5vw, 0.9em);
+            line-height: 1.4;
+        }
+
+        .close-console {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ff0000;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .auto-clickers {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            max-width: calc(100vw - 20px);
+            font-size: clamp(0.7em, 2.5vw, 0.9em);
+        }
+
+        .auto-clicker {
+            display: flex;
+            align-items: center;
+            margin: 3px 0;
+        }
+
+        .auto-clicker-dot {
+            width: 8px;
+            height: 8px;
+            background: #f7931a;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .prestige-section {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .prestige-button {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: clamp(0.9em, 3vw, 1em);
+            margin-top: 10px;
+        }
+
+        .prestige-button:hover {
+            background: linear-gradient(45deg, #ffed4e, #ffd700);
+        }
+
+        .prestige-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .game-area {
+                padding: 15px;
+            }
+            
+            .upgrades {
+                max-height: 40vh;
+                padding: 10px;
+            }
+            
+            .bitcoin {
+                margin: 10px 0;
+            }
+        }
+
+        /* Touch improvements */
+        .upgrade, .bitcoin, .prestige-button {
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-area">
+            <div class="stats">
+                <div class="bitcoin-count" id="bitcoinCount">0 Bitcoin</div>
+                <div class="bps" id="bpsDisplay">0 Bitcoin pro Sekunde</div>
+            </div>
+            <div class="bitcoin" id="mainBitcoin">
+                <div class="bitcoin-symbol">₿</div>
+            </div>
+        </div>
+
+        <div class="upgrades">
+            <h2>🛒 Upgrades</h2>
+            
+            <div class="prestige-section" id="prestigeSection" style="display: none;">
+                <h3>🌟 Prestige System</h3>
+                <p>Setze dein Imperium zurück für permanente Boni!</p>
+                <div id="prestigeInfo"></div>
+                <button class="prestige-button" id="prestigeButton" onclick="doPrestige()">
+                    Prestige durchführen
+                </button>
+            </div>
+            
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <div class="auto-clickers" id="autoClickersDisplay" style="display: none;">
+        <h4>🤖 Auto-Miner</h4>
+        <div id="autoClickersList"></div>
+    </div>
+
+    <div class="cheat-console" id="cheatConsole">
+        <button class="close-console" onclick="closeCheatConsole()">×</button>
+        <h3>🕹️ CHEAT KONSOLE</h3>
+        <div class="cheat-commands">
+            Verfügbare Befehle:<br>
+            • <strong>bitcoin [zahl]</strong> - Füge Bitcoin hinzu<br>
+            • <strong>reset</strong> - Spiel zurücksetzen<br>
+            • <strong>multiply [zahl]</strong> - Multipliziere alle Bitcoin<br>
+            • <strong>maxupgrades</strong> - Alle Upgrades auf Maximum<br>
+            • <strong>godmode</strong> - Unendliche Bitcoin<br>
+            • <strong>prestige</strong> - Sofortiges Prestige
+        </div>
+        <input type="text" class="cheat-input" id="cheatInput" placeholder="Befehl eingeben..." onkeypress="handleCheatInput(event)">
+        <div id="cheatOutput" style="margin-top: 10px; color: #ffff00;"></div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            bitcoin: 0,
+            totalClicks: 0,
+            bps: 0,
+            godMode: false,
+            prestigeLevel: 0,
+            prestigePoints: 0,
+            totalBitcoinEarned: 0
+        };
+
+        // Upgrades Configuration - Schwerer gemacht
+        let upgrades = [
+            {
+                name: "CPU Miner",
+                description: "Basis Mining alle 10 Sekunden",
+                baseCost: 25,
+                cost: 25,
+                owned: 0,
+                bps: 0.1,
+                type: 'autoClicker'
+            },
+            {
+                name: "GPU Rig",
+                description: "Verbessertes Mining-Setup",
+                baseCost: 200,
+                cost: 200,
+                owned: 0,
+                bps: 0.5,
+                type: 'autoClicker'
+            },
+            {
+                name: "Mining Farm",
+                description: "Kleine Mining Farm",
+                baseCost: 2500,
+                cost: 2500,
+                owned: 0,
+                bps: 3,
+                type: 'autoClicker'
+            },
+            {
+                name: "ASIC Center",
+                description: "Spezialisierte Hardware",
+                baseCost: 35000,
+                cost: 35000,
+                owned: 0,
+                bps: 20,
+                type: 'autoClicker'
+            },
+            {
+                name: "Mining Corporation",
+                description: "Industrielles Mining",
+                baseCost: 500000,
+                cost: 500000,
+                owned: 0,
+                bps: 150,
+                type: 'autoClicker'
+            },
+            {
+                name: "Quantum Miner",
+                description: "Futuristische Technologie",
+                baseCost: 8000000,
+                cost: 8000000,
+                owned: 0,
+                bps: 1200,
+                type: 'autoClicker'
+            },
+            {
+                name: "Click-Power",
+                description: "Verdoppelt Bitcoin pro Klick",
+                baseCost: 100,
+                cost: 100,
+                owned: 0,
+                multiplier: 2,
+                type: 'clickMultiplier'
+            },
+            {
+                name: "Turbo Klick",
+                description: "3x Bitcoin pro Klick",
+                baseCost: 1500,
+                cost: 1500,
+                owned: 0,
+                multiplier: 3,
+                type: 'clickMultiplier'
+            }
+        ];
+
+        // Game Variables
+        let clickPower = 1;
+        let autoClickerIntervals = [];
+
+        // Prestige System
+        function calculatePrestigePoints(totalEarned) {
+            return Math.floor(Math.sqrt(totalEarned / 1000000));
+        }
+
+        function getPrestigeMultiplier() {
+            return 1 + (gameState.prestigePoints * 0.1);
+        }
+
+        function updatePrestigeDisplay() {
+            const prestigeSection = document.getElementById('prestigeSection');
+            const prestigeInfo = document.getElementById('prestigeInfo');
+            const prestigeButton = document.getElementById('prestigeButton');
+            
+            const potentialPoints = calculatePrestigePoints(gameState.totalBitcoinEarned);
+            
+            if (potentialPoints > gameState.prestigePoints) {
+                prestigeSection.style.display = 'block';
+                const newPoints = potentialPoints - gameState.prestigePoints;
+                prestigeInfo.innerHTML = `
+                    <p>Aktuelle Prestige Punkte: ${gameState.prestigePoints}</p>
+                    <p>Neue Punkte: +${newPoints}</p>
+                    <p>Multiplier: ${getPrestigeMultiplier().toFixed(1)}x → ${(1 + potentialPoints * 0.1).toFixed(1)}x</p>
+                `;
+                prestigeButton.disabled = false;
+            } else {
+                prestigeSection.style.display = 'none';
+            }
+        }
+
+        function doPrestige() {
+            const newPrestigePoints = calculatePrestigePoints(gameState.totalBitcoinEarned);
+            if (newPrestigePoints > gameState.prestigePoints) {
+                gameState.prestigePoints = newPrestigePoints;
+                gameState.prestigeLevel++;
+                
+                // Reset game state
+                gameState.bitcoin = 0;
+                gameState.bps = 0;
+                gameState.totalBitcoinEarned = 0;
+                clickPower = 1;
+                
+                upgrades.forEach(u => {
+                    u.owned = 0;
+                    u.cost = u.baseCost;
+                });
+                
+                autoClickerIntervals.forEach(clearInterval);
+                autoClickerIntervals = [];
+                
+                updateDisplay();
+                alert(`Prestige erfolgreich! Du hast jetzt ${gameState.prestigePoints} Prestige Punkte und einen ${getPrestigeMultiplier().toFixed(1)}x Multiplier!`);
+            }
+        }
+
+        // Bitcoin image initialization
+        function initializeBitcoin() {
+            const bitcoinElement = document.getElementById('mainBitcoin');
+            const img = new Image();
+            img.onload = function() {
+                bitcoinElement.innerHTML = '';
+                bitcoinElement.className = 'bitcoin-image';
+                bitcoinElement.style.backgroundImage = 'url(assets/bitcoin.png)';
+            };
+            img.onerror = function() {
+                console.log('Bitcoin PNG not found, using CSS version');
+            };
+            img.src = 'assets/bitcoin.png';
+        }
+
+        // Display Functions
+        function updateDisplay() {
+            document.getElementById('bitcoinCount').textContent = formatNumber(Math.floor(gameState.bitcoin)) + ' Bitcoin';
+            document.getElementById('bpsDisplay').textContent = formatNumber(gameState.bps.toFixed(1)) + ' Bitcoin pro Sekunde';
+            updateUpgradesDisplay();
+            updateAutoClickersDisplay();
+            updatePrestigeDisplay();
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e15) return (num / 1e15).toFixed(1) + 'Q';
+            if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        // Click Functions
+        function clickBitcoin(event) {
+            let earnedBitcoin = clickPower * getPrestigeMultiplier();
+            gameState.bitcoin += earnedBitcoin;
+            gameState.totalBitcoinEarned += earnedBitcoin;
+            gameState.totalClicks++;
+
+            showClickEffect(event, '+' + formatNumber(earnedBitcoin));
+            updateDisplay();
+        }
+
+        function showClickEffect(event, text) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.textContent = text;
+            
+            const rect = event.target.getBoundingClientRect();
+            const offsetX = Math.random() * 40 - 20;
+            const offsetY = Math.random() * 40 - 20;
+            
+            effect.style.left = (event.clientX - rect.left + offsetX) + 'px';
+            effect.style.top = (event.clientY - rect.top + offsetY) + 'px';
+            
+            event.target.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    effect.parentNode.removeChild(effect);
+                }
+            }, 1000);
+        }
+
+        // Upgrade Functions
+        function updateUpgradesDisplay() {
+            const upgradesList = document.getElementById('upgradesList');
+            upgradesList.innerHTML = '';
+
+            upgrades.forEach((upgrade, index) => {
+                const upgradeDiv = document.createElement('div');
+                upgradeDiv.className = 'upgrade' + (gameState.bitcoin < upgrade.cost ? ' disabled' : '');
+                
+                upgradeDiv.innerHTML = `
+                    <div class="upgrade-name">${upgrade.name}</div>
+                    <div class="upgrade-description">${upgrade.description}</div>
+                    <div class="upgrade-cost">Kosten: ${formatNumber(upgrade.cost)}</div>
+                    ${upgrade.owned > 0 ? `<div class="upgrade-owned">${upgrade.owned}</div>` : ''}
+                `;
+
+                if (gameState.bitcoin >= upgrade.cost) {
+                    upgradeDiv.addEventListener('click', () => buyUpgrade(index));
+                    upgradeDiv.addEventListener('touchstart', () => buyUpgrade(index));
+                }
+
+                upgradesList.appendChild(upgradeDiv);
+            });
+        }
+
+        function buyUpgrade(index) {
+            const upgrade = upgrades[index];
+            if (gameState.bitcoin >= upgrade.cost) {
+                gameState.bitcoin -= upgrade.cost;
+                upgrade.owned++;
+
+                if (upgrade.type === 'autoClicker') {
+                    gameState.bps += upgrade.bps * getPrestigeMultiplier();
+                    startAutoClicker(upgrade);
+                } else if (upgrade.type === 'clickMultiplier') {
+                    clickPower *= upgrade.multiplier;
+                }
+
+                // Schwieriger: 1.25x cost multiplier
+                upgrade.cost = Math.ceil(upgrade.baseCost * Math.pow(1.25, upgrade.owned));
+
+                updateDisplay();
+            }
+        }
+
+        // Auto-Clicker Functions - Schwieriger gemacht
+        function startAutoClicker(upgrade) {
+            const interval = setInterval(() => {
+                if (!gameState.godMode) {
+                    const earned = upgrade.bps * getPrestigeMultiplier() * 10;
+                    gameState.bitcoin += earned;
+                    gameState.totalBitcoinEarned += earned;
+                }
+                updateDisplay();
+            }, 10000); // 10 Sekunden statt 5
+
+            autoClickerIntervals.push(interval);
+        }
+
+        function updateAutoClickersDisplay() {
+            const autoClickersDisplay = document.getElementById('autoClickersDisplay');
+            const autoClickersList = document.getElementById('autoClickersList');
+            
+            const activeAutoClickers = upgrades.filter(u => u.type === 'autoClicker' && u.owned > 0);
+            
+            if (activeAutoClickers.length > 0) {
+                autoClickersDisplay.style.display = 'block';
+                autoClickersList.innerHTML = '';
+                
+                activeAutoClickers.forEach(upgrade => {
+                    const div = document.createElement('div');
+                    div.className = 'auto-clicker';
+                    div.innerHTML = `
+                        <div class="auto-clicker-dot"></div>
+                        ${upgrade.name} (${upgrade.owned}) - ${formatNumber((upgrade.bps * upgrade.owned * getPrestigeMultiplier()).toFixed(1))}/s
+                    `;
+                    autoClickersList.appendChild(div);
+                });
+            } else {
+                autoClickersDisplay.style.display = 'none';
+            }
+        }
+
+        // Passive Income Timer - Schwieriger gemacht
+        setInterval(() => {
+            if (!gameState.godMode) {
+                const earned = gameState.bps;
+                gameState.bitcoin += earned;
+                gameState.totalBitcoinEarned += earned;
+            }
+            updateDisplay();
+        }, 1000);
+
+        // Cheat Console
+        let cheatSequence = [];
+        const cheatCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+
+        function closeCheatConsole() {
+            document.getElementById('cheatConsole').style.display = 'none';
+        }
+
+        function handleCheatInput(event) {
+            if (event.key === 'Enter') {
+                const input = event.target.value.toLowerCase().trim();
+                const output = document.getElementById('cheatOutput');
+                
+                executeCheat(input, output);
+                event.target.value = '';
+            }
+        }
+
+        function executeCheat(command, output) {
+            const parts = command.split(' ');
+            const cmd = parts[0];
+            const arg = parts[1];
+
+            switch(cmd) {
+                case 'bitcoin':
+                    const amount = parseInt(arg) || 1000;
+                    gameState.bitcoin += amount;
+                    gameState.totalBitcoinEarned += amount;
+                    output.textContent = `${amount} Bitcoin hinzugefügt!`;
+                    break;
+                
+                case 'reset':
+                    gameState.bitcoin = 0;
+                    gameState.bps = 0;
+                    gameState.totalClicks = 0;
+                    gameState.totalBitcoinEarned = 0;
+                    clickPower = 1;
+                    upgrades.forEach(u => {
+                        u.owned = 0;
+                        u.cost = u.baseCost;
+                    });
+                    autoClickerIntervals.forEach(clearInterval);
+                    autoClickerIntervals = [];
+                    output.textContent = 'Spiel zurückgesetzt!';
+                    break;
+                
+                case 'multiply':
+                    const multiplier = parseInt(arg) || 2;
+                    gameState.bitcoin *= multiplier;
+                    output.textContent = `Bitcoin mit ${multiplier} multipliziert!`;
+                    break;
+                
+                case 'maxupgrades':
+                    upgrades.forEach(upgrade => {
+                        upgrade.owned = 999;
+                        if (upgrade.type === 'autoClicker') {
+                            gameState.bps += upgrade.bps * 999;
+                        }
+                    });
+                    output.textContent = 'Alle Upgrades maximiert!';
+                    break;
+                
+                case 'godmode':
+                    gameState.godMode = !gameState.godMode;
+                    if (gameState.godMode) {
+                        gameState.bitcoin = 1e15;
+                        output.textContent = 'God Mode aktiviert!';
+                    } else {
+                        output.textContent = 'God Mode deaktiviert!';
+                    }
+                    break;
+                
+                case 'prestige':
+                    gameState.totalBitcoinEarned = 1000000;
+                    doPrestige();
+                    output.textContent = 'Prestige durchgeführt!';
+                    break;
+                
+                default:
+                    output.textContent = 'Unbekannter Befehl: ' + cmd;
+            }
+            
+            updateDisplay();
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeBitcoin();
+
+            // Bitcoin Click Event
+            const bitcoinElement = document.getElementById('mainBitcoin');
+            bitcoinElement.addEventListener('click', clickBitcoin);
+            bitcoinElement.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                clickBitcoin(e.touches[0]);
+            });
+
+            // Cheat Code Detection
+            document.addEventListener('keydown', (e) => {
+                cheatSequence.push(e.code);
+                if (cheatSequence.length > cheatCode.length) {
+                    cheatSequence.shift();
+                }
+                
+                if (JSON.stringify(cheatSequence) === JSON.stringify(cheatCode)) {
+                    document.getElementById('cheatConsole').style.display = 'block';
+                    document.getElementById('cheatInput').focus();
+                    cheatSequence = [];
+                }
+            });
+
+            // Prevent zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
